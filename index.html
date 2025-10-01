@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>나이트 투어 시뮬레이션</title>
+    <title>Knight's Tour Game</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -178,8 +178,8 @@
 <div class="container">
     <div class="flex flex-col sm:flex-row justify-between items-center w-full mb-4">
         <h1 class="title text-3xl sm:text-4xl font-extrabold mb-2 sm:mb-0" data-lang-key="title">나이트 투어</h1>
-        <div id="moveCountContainer" class="subtitle text-lg font-medium">
-            <span data-lang-key="move_count">현재 이동 횟수:</span> <span id="moveCount">0</span>
+        <div id="statusContainer" class="subtitle text-lg font-medium">
+            <!-- Game status will be rendered here by JS -->
         </div>
     </div>
     
@@ -248,11 +248,11 @@
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4 flex-wrap">
             <div class="flex items-center gap-2">
                 <label for="customHeight" data-lang-key="map_height">세로:</label>
-                <input type="number" id="customHeight" class="p-2 border rounded-md w-20 text-center" value="8" min="3" max="20">
+                <input type="number" id="customHeight" class="p-2 border rounded-md w-20 text-center" value="8" min="3" max="30">
             </div>
             <div class="flex items-center gap-2">
                 <label for="customWidth" data-lang-key="map_width">가로:</label>
-                <input type="number" id="customWidth" class="p-2 border rounded-md w-20 text-center" value="8" min="3" max="20">
+                <input type="number" id="customWidth" class="p-2 border rounded-md w-20 text-center" value="8" min="3" max="30">
             </div>
             <button id="createGridBtn" class="btn-apply font-bold py-2 px-4 rounded-lg" data-lang-key="create_grid_btn">그리드 생성</button>
         </div>
@@ -271,33 +271,30 @@
 document.addEventListener('DOMContentLoaded', () => {
     const translations = {
         ko: {
-            title: "나이트 투어", move_count: "현재 이동 횟수:", board_select: "보드 선택:", board_classic: "8x8 (클래식)", board_center_block: "중앙 4개 막힌 보드 (8x8)", board_vertical_block: "세로줄 막힌 보드 (9x9)", board_apple_quest: "사과 따기 (9x9)", custom_map: "커스텀 맵 만들기", language_select: "언어:", theme_select: "테마:", theme_light: "라이트", theme_dark: "다크", theme_classic: "클래식", apply_btn: "적용", undo_btn: "되돌리기", reset_btn: "재시작", msg_start: "시작하려면 원하는 칸을 클릭하세요.", msg_blocked: "이 칸은 막혀있어 이동할 수 없습니다.", msg_visited: "이미 방문한 칸입니다. 다른 칸을 선택하세요.", msg_invalid_move: "유효하지 않은 이동입니다. 다른 칸을 선택하세요.", msg_next_move: "다음 이동할 곳을 클릭하세요.", msg_undo: "마지막 이동을 되돌렸습니다. 계속하세요.", msg_win: "축하합니다! 투어를 완료했습니다!", msg_lose: (m) => `게임 오버! ${m}번 이동했습니다.`, msg_apple_start: (t) => `사과를 12개 먹으세요. 남은 턴: ${t}`, msg_apple_status: (e, t, l) => `사과: ${e}/${t}개. 남은 턴: ${l}`, msg_apple_win: (m) => `성공! 턴을 ${m}번 사용해 사과를 모두 먹었습니다!`, msg_apple_lose: (t) => `실패! ${t}턴 안에 12개의 사과를 모두 먹지 못했습니다.`, map_editor_title: "맵 에디터", map_height: "세로:", map_width: "가로:", create_grid_btn: "그리드 생성", editor_instruction: "칸을 클릭하여 벽을 만들거나 없앨 수 있습니다.", apply_map_btn: "맵 적용하기", cancel_btn: "취소"
+            title: "나이트 투어", move_count: "현재 이동 횟수:", board_select: "보드 선택:", board_classic: "8x8 (클래식)", board_center_block: "중앙 4개 막힌 보드 (8x8)", board_vertical_block: "세로줄 막힌 보드 (9x9)", board_apple_quest: "사과 따기 (9x9)", custom_map: "커스텀 맵 만들기", language_select: "언어:", theme_select: "테마:", theme_light: "라이트", theme_dark: "다크", theme_classic: "클래식", apply_btn: "적용", undo_btn: "되돌리기", reset_btn: "재시작", msg_start: "시작하려면 원하는 칸을 클릭하세요.", msg_blocked: "이 칸은 막혀있어 이동할 수 없습니다.", msg_visited: "이미 방문한 칸입니다. 다른 칸을 선택하세요.", msg_invalid_move: "유효하지 않은 이동입니다. 다른 칸을 선택하세요.", msg_next_move: "다음 이동할 곳을 클릭하세요.", msg_undo: "마지막 이동을 되돌렸습니다. 계속하세요.", msg_win: "축하합니다! 투어를 완료했습니다!", msg_lose: (m) => `게임 오버! ${m}번 이동했습니다.`, msg_apple_start: (t) => `사과를 12개 먹으세요. 남은 턴: ${t}`, apple_status: (e, t, l) => `사과: ${e}/${t}개 | 남은 턴: ${l}`, msg_apple_win: (m) => `성공! 턴을 ${m}번 사용해 사과를 모두 먹었습니다!`, msg_apple_lose: (t) => `실패! ${t}턴 안에 12개의 사과를 모두 먹지 못했습니다.`, map_editor_title: "맵 에디터", map_height: "세로:", map_width: "가로:", create_grid_btn: "그리드 생성", editor_instruction: "칸을 클릭하여 벽을 만들거나 없앨 수 있습니다.", apply_map_btn: "맵 적용하기", cancel_btn: "취소"
         },
         en: {
-            title: "Knight's Tour", move_count: "Current Moves:", board_select: "Select Board:", board_classic: "8x8 (Classic)", board_center_block: "Center 4-Block (8x8)", board_vertical_block: "Vertical Line Block (9x9)", board_apple_quest: "Apple Quest (9x9)", custom_map: "Create Custom Map", language_select: "Language:", theme_select: "Theme:", theme_light: "Light", theme_dark: "Dark", theme_classic: "Classic", apply_btn: "Apply", undo_btn: "Undo", reset_btn: "Restart", msg_start: "Click a square to begin.", msg_blocked: "This square is blocked.", msg_visited: "This square has been visited. Choose another.", msg_invalid_move: "Invalid move. Choose another.", msg_next_move: "Click the next square to move.", msg_undo: "Last move undone. Please continue.", msg_win: "Congratulations! You completed the tour!", msg_lose: (m) => `Game Over! You made ${m} moves.`, msg_apple_start: (t) => `Eat 12 apples. Turns left: ${t}`, msg_apple_status: (e, t, l) => `Apples: ${e}/${t}. Turns left: ${l}`, msg_apple_win: (m) => `Success! You ate all apples in ${m} turns!`, msg_apple_lose: (t) => `Failure! You didn't eat 12 apples in ${t} turns.`, map_editor_title: "Map Editor", map_height: "Height:", map_width: "Width:", create_grid_btn: "Create Grid", editor_instruction: "Click cells to toggle walls.", apply_map_btn: "Apply Map", cancel_btn: "Cancel"
+            title: "Knight's Tour", move_count: "Current Moves:", board_select: "Select Board:", board_classic: "8x8 (Classic)", board_center_block: "Center 4-Block (8x8)", board_vertical_block: "Vertical Line Block (9x9)", board_apple_quest: "Apple Quest (9x9)", custom_map: "Create Custom Map", language_select: "Language:", theme_select: "Theme:", theme_light: "Light", theme_dark: "Dark", theme_classic: "Classic", apply_btn: "Apply", undo_btn: "Undo", reset_btn: "Restart", msg_start: "Click a square to begin.", msg_blocked: "This square is blocked.", msg_visited: "This square has been visited. Choose another.", msg_invalid_move: "Invalid move. Choose another.", msg_next_move: "Click the next square to move.", msg_undo: "Last move undone. Please continue.", msg_win: "Congratulations! You completed the tour!", msg_lose: (m) => `Game Over! You made ${m} moves.`, msg_apple_start: (t) => `Eat 12 apples. Turns left: ${t}`, apple_status: (e, t, l) => `Apples: ${e}/${t} | Turns Left: ${l}`, msg_apple_win: (m) => `Success! You ate all apples in ${m} turns!`, msg_apple_lose: (t) => `Failure! You didn't eat 12 apples in ${t} turns.`, map_editor_title: "Map Editor", map_height: "Height:", map_width: "Width:", create_grid_btn: "Create Grid", editor_instruction: "Click cells to toggle walls.", apply_map_btn: "Apply Map", cancel_btn: "Cancel"
         },
         ja: {
-            title: "ナイトツアー", move_count: "現在の手数：", board_select: "ボード選択：", board_classic: "8x8 (クラシック)", board_center_block: "中央4マスブロック (8x8)", board_vertical_block: "中央縦線ブロック (9x9)", board_apple_quest: "リンゴ集め (9x9)", custom_map: "カスタムマップ作成", language_select: "言語：", theme_select: "テーマ：", theme_light: "ライト", theme_dark: "ダーク", theme_classic: "クラシック", apply_btn: "適用", undo_btn: "元に戻す", reset_btn: "リスタート", msg_start: "マスをクリックして開始します。", msg_blocked: "このマスはブロックされています。", msg_visited: "このマスは既に訪れました。他のマスを選択してください。", msg_invalid_move: "無効な動きです。他のマスを選択してください。", msg_next_move: "次のマスをクリックしてください。", msg_undo: "最後の手を元に戻しました。続けてください。", msg_win: "おめでとうございます！ツアーを完了しました！", msg_lose: (m) => `ゲームオーバー！${m}手動きました。`, msg_apple_start: (t) => `リンゴを12個集めてください。残りターン：${t}`, msg_apple_status: (e, t, l) => `リンゴ：${e}/${t}個。残りターン：${l}`, msg_apple_win: (m) => `成功！${m}ターンで全てのリンゴを集めました！`, msg_apple_lose: (t) => `失敗！${t}ターン内に12個のリンゴを集められませんでした。`, map_editor_title: "マップエディター", map_height: "縦:", map_width: "横:", create_grid_btn: "グリッド作成", editor_instruction: "マスをクリックして壁を設置/撤去します。", apply_map_btn: "マップを適用", cancel_btn: "キャンセル"
+            title: "ナイトツアー", move_count: "現在の手数：", board_select: "ボード選択：", board_classic: "8x8 (クラシック)", board_center_block: "中央4マスブロック (8x8)", board_vertical_block: "中央縦線ブロック (9x9)", board_apple_quest: "リンゴ集め (9x9)", custom_map: "カスタムマップ作成", language_select: "言語：", theme_select: "テーマ：", theme_light: "ライト", theme_dark: "ダーク", theme_classic: "クラシック", apply_btn: "適用", undo_btn: "元に戻す", reset_btn: "リスタート", msg_start: "マスをクリックして開始します。", msg_blocked: "このマスはブロックされています。", msg_visited: "このマスは既に訪れました。他のマスを選択してください。", msg_invalid_move: "無効な動きです。他のマスを選択してください。", msg_next_move: "次のマスをクリックしてください。", msg_undo: "最後の手を元に戻しました。続けてください。", msg_win: "おめでとうございます！ツアーを完了しました！", msg_lose: (m) => `ゲームオーバー！${m}手動きました。`, msg_apple_start: (t) => `リンゴを12個集めてください。残りターン：${t}`, apple_status: (e, t, l) => `リンゴ：${e}/${t}個 | 残りターン：${l}`, msg_apple_win: (m) => `成功！${m}ターンで全てのリンゴを集めました！`, msg_apple_lose: (t) => `失敗！${t}ターン内に12個のリンゴを集められませんでした。`, map_editor_title: "マップエディター", map_height: "縦:", map_width: "横:", create_grid_btn: "グリッド作成", editor_instruction: "マスをクリックして壁を設置/撤去します。", apply_map_btn: "マップを適用", cancel_btn: "キャンセル"
         },
         zh: {
-            title: "骑士巡游", move_count: "当前步数：", board_select: "选择棋盘：", board_classic: "8x8 (经典)", board_center_block: "中心4格障碍 (8x8)", board_vertical_block: "垂直线障碍 (9x9)", board_apple_quest: "苹果任务 (9x9)", custom_map: "创建自定义地图", language_select: "语言：", theme_select: "主题：", theme_light: "明亮", theme_dark: "黑暗", theme_classic: "经典", apply_btn: "应用", undo_btn: "撤销", reset_btn: "重新开始", msg_start: "点击一个方格开始。", msg_blocked: "这个方格被阻塞了。", msg_visited: "这个方格已被访问。请选择另一个。", msg_invalid_move: "无效的移动。请选择另一个。", msg_next_move: "请点击下一个方格。", msg_undo: "已撤销上一步。请继续。", msg_win: "恭喜！您已完成巡游！", msg_lose: (m) => `游戏结束！您移动了 ${m} 步。`, msg_apple_start: (t) => `吃掉12个苹果。剩余回合：${t}`, msg_apple_status: (e, t, l) => `苹果：${e}/${t}。剩余回合：${l}`, msg_apple_win: (m) => `成功！您在 ${m} 回合内吃掉了所有苹果！`, msg_apple_lose: (t) => `失败！您未能在 ${t} 回合内吃掉所有12个苹果。`, map_editor_title: "地图编辑器", map_height: "高度:", map_width: "宽度:", create_grid_btn: "创建网格", editor_instruction: "点击单元格以切换墙壁。", apply_map_btn: "应用地图", cancel_btn: "取消"
+            title: "骑士巡游", move_count: "当前步数：", board_select: "选择棋盘：", board_classic: "8x8 (经典)", board_center_block: "中心4格障碍 (8x8)", board_vertical_block: "垂直线障碍 (9x9)", board_apple_quest: "苹果任务 (9x9)", custom_map: "创建自定义地图", language_select: "语言：", theme_select: "主题：", theme_light: "明亮", theme_dark: "黑暗", theme_classic: "经典", apply_btn: "应用", undo_btn: "撤销", reset_btn: "重新开始", msg_start: "点击一个方格开始。", msg_blocked: "这个方格被阻塞了。", msg_visited: "这个方格已被访问。请选择另一个。", msg_invalid_move: "无效的移动。请选择另一个。", msg_next_move: "请点击下一个方格。", msg_undo: "已撤销上一步。请继续。", msg_win: "恭喜！您已完成巡游！", msg_lose: (m) => `游戏结束！您移动了 ${m} 步。`, msg_apple_start: (t) => `吃掉12个苹果。剩余回合：${t}`, apple_status: (e, t, l) => `苹果：${e}/${t} | 剩余回合：${l}`, msg_apple_win: (m) => `成功！您在 ${m} 回合内吃掉了所有苹果！`, msg_apple_lose: (t) => `失败！您未能在 ${t} 回合内吃掉所有12个苹果。`, map_editor_title: "地图编辑器", map_height: "高度:", map_width: "宽度:", create_grid_btn: "创建网格", editor_instruction: "点击单元格以切换墙壁。", apply_map_btn: "应用地图", cancel_btn: "取消"
         }
     };
     
     let boardWidth = 8, boardHeight = 8, board = [], moveCount = 0, currentPosition = null, moveHistory = [], boardType = 'standard', customLayout = [];
     const knightMoves = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
     
-    // Game Mode States
     let applesToEat = 12, applesEaten = 0, totalTurns = 25;
 
-    // Layouts
     const center4BlockLayout = Array(8).fill(null).map(() => Array(8).fill(1));
     center4BlockLayout[3][3]=0; center4BlockLayout[3][4]=0; center4BlockLayout[4][3]=0; center4BlockLayout[4][4]=0;
     const verticalLineBlockLayout = Array(9).fill(null).map(() => Array(9).fill(1));
     for (let i = 0; i < 9; i++) { verticalLineBlockLayout[i][4] = 0; }
     
-    // DOM Elements
-    const boardElement = document.getElementById('board'), boardSizeSelect = document.getElementById('boardSizeSelect'), mainApplyBtn = document.getElementById('mainApplyBtn'), moveCountElement = document.getElementById('moveCount'), messageBox = document.getElementById('messageBox'), resetButton = document.getElementById('resetBtn'), undoButton = document.getElementById('undoBtn'), languageSelect = document.getElementById('languageSelect'), themeSelect = document.getElementById('themeSelect'), gameContainer = document.getElementById('gameContainer'), mapEditorContainer = document.getElementById('mapEditorContainer'), customHeightInput = document.getElementById('customHeight'), customWidthInput = document.getElementById('customWidth'), createGridBtn = document.getElementById('createGridBtn'), mapEditorGrid = document.getElementById('mapEditorGrid'), applyCustomMapBtn = document.getElementById('applyCustomMapBtn'), cancelEditorBtn = document.getElementById('cancelEditorBtn');
+    const boardElement = document.getElementById('board'), boardSizeSelect = document.getElementById('boardSizeSelect'), mainApplyBtn = document.getElementById('mainApplyBtn'), statusContainer = document.getElementById('statusContainer'), messageBox = document.getElementById('messageBox'), resetButton = document.getElementById('resetBtn'), undoButton = document.getElementById('undoBtn'), languageSelect = document.getElementById('languageSelect'), themeSelect = document.getElementById('themeSelect'), gameContainer = document.getElementById('gameContainer'), mapEditorContainer = document.getElementById('mapEditorContainer'), customHeightInput = document.getElementById('customHeight'), customWidthInput = document.getElementById('customWidth'), createGridBtn = document.getElementById('createGridBtn'), mapEditorGrid = document.getElementById('mapEditorGrid'), applyCustomMapBtn = document.getElementById('applyCustomMapBtn'), cancelEditorBtn = document.getElementById('cancelEditorBtn');
     
     const applyLanguage = () => {
         const lang = getCurrentLang();
@@ -306,6 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (translations[lang][key] && typeof translations[lang][key] === 'string') el.textContent = translations[lang][key];
         });
         updateMessage();
+        updateStatus();
     };
     const applyTheme = () => { document.body.className = themeSelect.value; };
     
@@ -317,16 +315,25 @@ document.addEventListener('DOMContentLoaded', () => {
         return layoutMap[boardType] || boardWidth * boardHeight;
     };
     
+    const updateStatus = () => {
+        const lang = getCurrentLang();
+        const t = translations[lang];
+        if (boardType === 'apple-quest') {
+            statusContainer.innerHTML = t.apple_status(applesEaten, applesToEat, totalTurns - moveCount);
+        } else {
+            statusContainer.innerHTML = `<span data-lang-key="move_count">${t.move_count}</span> <span id="moveCount">${moveCount}</span>`;
+        }
+    };
+
     const updateMessage = () => {
         const lang = getCurrentLang();
         const t = translations[lang];
 
         if (boardType === 'apple-quest') {
-            const movesLeft = totalTurns - moveCount;
-            if (currentPosition === null) { messageBox.textContent = t.msg_apple_start(totalTurns); return; }
             if (applesEaten === applesToEat) { messageBox.textContent = t.msg_apple_win(moveCount); return; }
             if (moveCount >= totalTurns) { messageBox.textContent = t.msg_apple_lose(totalTurns); return; }
-            messageBox.textContent = t.msg_apple_status(applesEaten, applesToEat, movesLeft);
+            if (currentPosition === null) { messageBox.textContent = t.msg_start; return; }
+            messageBox.textContent = t.msg_next_move;
             return;
         }
 
@@ -344,8 +351,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedValue = boardSizeSelect.value;
         if (selectedValue === 'custom-map') {
             boardType = 'custom';
-            boardHeight = customLayout.length;
-            boardWidth = customLayout[0]?.length || 0;
+            boardHeight = customLayout.length > 0 ? customLayout.length : 8;
+            boardWidth = customLayout[0]?.length > 0 ? customLayout[0].length : 8;
         } else if (selectedValue.includes('x')) {
             boardType = 'standard';
             const dims = selectedValue.split('x').map(Number);
@@ -365,7 +372,6 @@ document.addEventListener('DOMContentLoaded', () => {
         boardElement.style.gridTemplateRows = `repeat(${boardHeight}, 1fr)`;
         
         setButtonsDisabledState(false);
-        moveCountElement.textContent = '0';
         
         for (let i = 0; i < boardHeight; i++) {
             board[i] = [];
@@ -394,9 +400,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let placed = 0;
         while (placed < applesToEat) {
             const r = Math.floor(Math.random() * boardHeight), c = Math.floor(Math.random() * boardWidth);
-            if (!board[r][c].isMazeBlock) {
-                board[r][c].isMazeBlock = true;
-                board[r][c].element.innerHTML = `<span class="apple">🍎</span>`;
+            if (!board[r][c].isMazeBlock && !board[r][c].piece) {
+                board[r][c].piece = { type: 'apple', symbol: '🍎' };
                 placed++;
             }
         }
@@ -415,27 +420,54 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (currentPosition === null) {
-            currentPosition = { row, col }; moveHistory.push(currentPosition);
-            moveCount = 1;
-            board[row][col].visited = true; board[row][col].moveNumber = 1; 
-        } else {
-            const isValidMove = isWithinBounds(row, col) && isKnightMove(currentPosition, { row, col });
-            if (isValidMove) {
-                if (boardType !== 'apple-quest' && board[row][col].visited) {
-                    messageBox.textContent = translations[lang].msg_visited; return;
+        if (boardType === 'apple-quest') {
+            if (currentPosition === null) {
+                currentPosition = { row, col };
+                moveCount = 0;
+            } else {
+                const isValidMove = isWithinBounds(row, col) && isKnightMove(currentPosition, { row, col });
+                if (isValidMove) {
+                    currentPosition = { row, col };
+                    moveCount++;
+                } else {
+                    messageBox.textContent = translations[lang].msg_invalid_move;
+                    return;
                 }
-                currentPosition = { row, col }; moveCount++; moveHistory.push(currentPosition);
-                board[row][col].visited = true; board[row][col].moveNumber = moveCount;
-            } else { messageBox.textContent = translations[lang].msg_invalid_move; return; }
-        }
-        
-        if (boardType === 'apple-quest' && cell.piece?.type === 'apple') {
-             if (board[row][col].hasApple) { board[row][col].hasApple = false; applesEaten++; }
+            }
+            const currentCell = board[currentPosition.row][currentPosition.col];
+            if (currentCell.piece?.type === 'apple') {
+                currentCell.piece = null;
+                applesEaten++;
+            }
+        } else {
+            if (currentPosition === null) {
+                currentPosition = { row, col };
+                moveHistory.push(currentPosition);
+                moveCount = 1;
+                board[row][col].visited = true;
+                board[row][col].moveNumber = 1;
+            } else {
+                const isValidMove = isWithinBounds(row, col) && isKnightMove(currentPosition, { row, col });
+                if (isValidMove) {
+                    if (board[row][col].visited) {
+                        messageBox.textContent = translations[lang].msg_visited;
+                        return;
+                    }
+                    currentPosition = { row, col };
+                    moveHistory.push(currentPosition);
+                    moveCount++;
+                    board[row][col].visited = true;
+                    board[row][col].moveNumber = moveCount;
+                } else {
+                    messageBox.textContent = translations[lang].msg_invalid_move;
+                    return;
+                }
+            }
         }
 
         updateBoard();
         updateMessage();
+        updateStatus();
         if (checkGameEnd()) setButtonsDisabledState(true);
     };
     
@@ -450,6 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
         moveCount--;
         updateBoard();
         updateMessage();
+        updateStatus();
     };
 
     const getPossibleMoves = (row, col) => {
@@ -457,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const [dr, dc] of knightMoves) {
             const newRow = row + dr, newCol = col + dc;
             if (isWithinBounds(newRow, newCol)) {
-                 if (boardType === 'apple-quest' || !board[newRow][newCol].visited) {
+                if (boardType === 'apple-quest' || !board[newRow][newCol].visited) {
                     moves.push({ row: newRow, col: newCol });
                 }
             }
@@ -487,9 +520,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 cellEl.classList.remove('path', 'current');
                 
                 let content = '';
-                if (cellData.isMazeBlock) content = '❌';
-                
-                if (cellData.visited) {
+                if (cellData.isMazeBlock) {
+                    content = '❌';
+                } else if (cellData.piece?.type === 'apple') {
+                    content = `<span style="font-size: 1.5rem;">${cellData.piece.symbol}</span>`;
+                } else if (boardType !== 'apple-quest' && cellData.visited) {
                     cellEl.classList.add('path');
                     content = cellData.moveNumber;
                 }
@@ -503,8 +538,6 @@ document.addEventListener('DOMContentLoaded', () => {
             curCellEl.innerHTML = `<span class="knight">♞</span>`;
             if (!checkGameEnd()) highlightPossibleMoves();
         }
-        
-        moveCountElement.textContent = boardType === 'apple-quest' ? applesEaten : moveCount;
     };
     
     const highlightPossibleMoves = () => {
@@ -559,7 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleEditor = (show) => {
         gameContainer.classList.toggle('hidden', show);
         mapEditorContainer.classList.toggle('hidden', !show);
-        document.getElementById('moveCountContainer').classList.toggle('hidden', show);
+        document.getElementById('statusContainer').classList.toggle('hidden', show);
     };
 
     mainApplyBtn.addEventListener('click', () => { if (boardSizeSelect.value !== 'custom-map') initializeBoard(); });
@@ -579,6 +612,15 @@ document.addEventListener('DOMContentLoaded', () => {
     applyCustomMapBtn.addEventListener('click', () => { toggleEditor(false); initializeBoard(); });
     cancelEditorBtn.addEventListener('click', () => { toggleEditor(false); boardSizeSelect.value = '8x8'; });
     
+    const enforceMaxValue = (e) => {
+        const max = parseInt(e.target.max);
+        if (parseInt(e.target.value) > max) {
+            e.target.value = max;
+        }
+    };
+    customHeightInput.addEventListener('input', enforceMaxValue);
+    customWidthInput.addEventListener('input', enforceMaxValue);
+
     applyTheme();
     initializeBoard();
 });
