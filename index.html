@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나이트 투어 시뮬레이션</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-color: #f0f4f8;
+            --container-bg-color: #ffffff;
+            --board-container-bg-color: #e2e8f0;
+            --text-color: #334155;
+            --text-slate-600: #475569;
+            --text-slate-800: #1e293b;
+            --border-color: #334155;
+            --shadow-color-1: rgba(0, 0, 0, 0.1);
+            --shadow-color-2: rgba(0, 0, 0, 0.05);
+
+            --cell-light-bg: #f1f5f9;
+            --cell-dark-bg: #cbd5e1;
+            --cell-text-color: #475569;
+            --cell-path-bg: #64748b;
+            --cell-current-bg: #1e293b;
+            --cell-highlight-bg: #94a3b8;
+            --maze-block-bg: #475569;
+            --maze-block-text: #fff;
+            --message-box-bg: #f1f5f9;
+            
+            --select-bg: #ffffff;
+            --select-border: #d1d5db;
+            --select-text: #111827;
+            
+            --btn-blue-bg: #3b82f6;
+            --btn-blue-hover-bg: #2563eb;
+            --btn-gray-bg: #6b7280;
+            --btn-gray-hover-bg: #4b5563;
+            --btn-red-bg: #ef4444;
+            --btn-red-hover-bg: #dc2626;
+            --btn-text: #ffffff;
+        }
+
+        body.dark {
+            --bg-color: #0d1117;
+            --container-bg-color: #161b22;
+            --board-container-bg-color: #010409;
+            --text-color: #c9d1d9;
+            --text-slate-600: #8b949e;
+            --text-slate-800: #e6edf3;
+            --border-color: #8b949e;
+            --shadow-color-1: rgba(0, 0, 0, 0.3);
+            --shadow-color-2: rgba(0, 0, 0, 0.2);
+
+            --cell-light-bg: #21262d;
+            --cell-dark-bg: #30363d;
+            --cell-text-color: #c9d1d9;
+            --cell-path-bg: #3fb950;
+            --cell-current-bg: #f78166;
+            --cell-highlight-bg: #388bfd;
+            --maze-block-bg: #484f58;
+            --maze-block-text: #c9d1d9;
+            --message-box-bg: #0d1117;
+
+            --select-bg: #1f2937;
+            --select-border: #4b5563;
+            --select-text: #d1d5db;
+        }
+        
+        body.classic {
+            --bg-color: #d2b48c;
+            --container-bg-color: #f5f5dc;
+            --board-container-bg-color: #a0522d;
+            --text-color: #8b4513;
+            --text-slate-600: #8b4513;
+            --text-slate-800: #5c2d0a;
+            --border-color: #8b4513;
+            --shadow-color-1: rgba(0, 0, 0, 0.15);
+            --shadow-color-2: rgba(0, 0, 0, 0.08);
+
+            --cell-light-bg: #ffdead;
+            --cell-dark-bg: #deb887;
+            --cell-text-color: #5c2d0a;
+            --cell-path-bg: #8b4513;
+            --cell-current-bg: #cd853f;
+            --cell-highlight-bg: #f4a460;
+            --maze-block-bg: #a0522d;
+            --maze-block-text: #fff;
+            --message-box-bg: #f5deb3;
+
+            --select-bg: #f5f5dc;
+            --select-border: #a0522d;
+            --select-text: #8b4513;
+
+            --btn-blue-bg: #a0522d;
+            --btn-blue-hover-bg: #8b4513;
+            --btn-gray-bg: #cd853f;
+            --btn-gray-hover-bg: #a0522d;
+            --btn-red-bg: #d2691e;
+            --btn-red-hover-bg: #a0522d;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .container {
+            display: flex; flex-direction: column; gap: 20px;
+            max-width: 900px; width: 100%;
+            background-color: var(--container-bg-color);
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px var(--shadow-color-1), 0 4px 6px -2px var(--shadow-color-2);
+            padding: 24px;
+            transition: background-color 0.3s ease;
+        }
+        .board-container {
+            display: flex; justify-content: center; align-items: center;
+            padding: 10px;
+            background-color: var(--board-container-bg-color);
+            border-radius: 0.5rem;
+        }
+        .board, .map-editor-grid {
+            display: grid;
+            border: 2px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px var(--shadow-color-1), 0 2px 4px -1px var(--shadow-color-2);
+            width: 100%; aspect-ratio: 1 / 1;
+        }
+        .cell, .editor-cell {
+            position: relative;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 0.75rem; font-weight: bold;
+            color: var(--cell-text-color);
+            user-select: none; cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+        .cell.light, .editor-cell.light { background-color: var(--cell-light-bg); }
+        .cell.dark, .editor-cell.dark { background-color: var(--cell-dark-bg); }
+        .cell.highlight { background-color: var(--cell-highlight-bg) !important; }
+        .cell.path { background-color: var(--cell-path-bg) !important; color: #ffffff; }
+        .cell.current { background-color: var(--cell-current-bg) !important; color: #ffffff; }
+        .knight { font-size: 2rem; line-height: 1; }
+        .message-box {
+            background-color: var(--message-box-bg);
+            padding: 1rem; border-radius: 0.5rem; min-height: 50px;
+            display: flex; justify-content: center; align-items: center;
+            text-align: center; font-weight: 500;
+        }
+        .maze-block, .editor-cell.blocked {
+            background-color: var(--maze-block-bg) !important;
+            cursor: not-allowed;
+            color: var(--maze-block-text);
+        }
+        .title { color: var(--text-slate-800); }
+        .subtitle { color: var(--text-slate-600); }
+        select, input[type="number"] {
+            background-color: var(--select-bg);
+            border-color: var(--select-border);
+            color: var(--select-text);
+        }
+        .btn-apply { background-color: var(--btn-blue-bg); color: var(--btn-text); }
+        .btn-apply:hover { background-color: var(--btn-blue-hover-bg); }
+        .btn-undo { background-color: var(--btn-gray-bg); color: var(--btn-text); }
+        .btn-undo:hover { background-color: var(--btn-gray-hover-bg); }
+        .btn-reset { background-color: var(--btn-red-bg); color: var(--btn-text); }
+        .btn-reset:hover { background-color: var(--btn-red-hover-bg); }
+
+        @media (min-width: 640px) { .cell, .editor-cell { font-size: 1rem; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="flex flex-col sm:flex-row justify-between items-center w-full mb-4">
+        <h1 class="title text-3xl sm:text-4xl font-extrabold mb-2 sm:mb-0" data-lang-key="title">나이트 투어</h1>
+        <div id="moveCountContainer" class="subtitle text-lg font-medium">
+            <span data-lang-key="move_count">현재 이동 횟수:</span> <span id="moveCount">0</span>
+        </div>
+    </div>
+    
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4 flex-wrap">
+        <div class="flex items-center gap-2">
+            <label for="boardSizeSelect" class="font-bold" data-lang-key="board_select">보드 선택:</label>
+            <select id="boardSizeSelect" class="p-2 border rounded-md">
+                <option value="4x3">4x3</option>
+                <option value="4x5">4x5</option>
+                <option value="5x5">5x5</option>
+                <option value="6x6">6x6</option>
+                <option value="7x7">7x7</option>
+                <option value="8x8" selected data-lang-key="board_classic">8x8 (클래식)</option>
+                <option value="9x9">9x9</option>
+                <option value="10x10">10x10</option>
+                <option value="11x11">11x11</option>
+                <option value="12x12">12x12</option>
+                <option value="13x13">13x13</option>
+                <option value="14x14">14x14</option>
+                <option value="15x15">15x15</option>
+                <option value="center-4-block" data-lang-key="board_center_block">중앙 4개 막힌 보드 (8x8)</option>
+                <option value="vertical-line-block" data-lang-key="board_vertical_block">세로줄 막힌 보드 (9x9)</option>
+                <option value="apple-quest" data-lang-key="board_apple_quest">사과 따기 (9x9)</option>
+                <option value="custom-map" data-lang-key="custom_map">커스텀 맵 만들기</option>
+            </select>
+        </div>
+        <div class="flex items-center gap-2">
+            <label for="languageSelect" class="font-bold" data-lang-key="language_select">언어:</label>
+            <select id="languageSelect" class="p-2 border rounded-md">
+                <option value="en">English</option>
+                <option value="ko">한국어</option>
+                <option value="ja">日本語</option>
+                <option value="zh">中文</option>
+            </select>
+        </div>
+        <div class="flex items-center gap-2">
+            <label for="themeSelect" class="font-bold" data-lang-key="theme_select">테마:</label>
+            <select id="themeSelect" class="p-2 border rounded-md">
+                <option value="light" data-lang-key="theme_light">라이트</option>
+                <option value="dark" data-lang-key="theme_dark">다크</option>
+                <option value="classic" data-lang-key="theme_classic">클래식</option>
+            </select>
+        </div>
+        <button id="mainApplyBtn" class="btn-apply font-bold py-2 px-6 rounded-lg shadow-md transition-colors duration-200" data-lang-key="apply_btn">
+            적용
+        </button>
+    </div>
+
+    <div id="gameContainer">
+        <div class="board-container">
+            <div id="board" class="board"></div>
+        </div>
+        <div id="messageBox" class="message-box"></div>
+        <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mt-4 flex-wrap">
+            <button id="undoBtn" class="btn-undo font-bold py-2 px-6 rounded-lg shadow-md transition-colors duration-200" data-lang-key="undo_btn">
+                되돌리기
+            </button>
+            <button id="resetBtn" class="btn-reset font-bold py-2 px-6 rounded-lg shadow-md transition-colors duration-200" data-lang-key="reset_btn">
+                재시작
+            </button>
+        </div>
+    </div>
+    
+    <div id="mapEditorContainer" class="hidden flex-col gap-4">
+        <h2 class="text-2xl font-bold text-center" data-lang-key="map_editor_title">맵 에디터</h2>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 flex-wrap">
+            <div class="flex items-center gap-2">
+                <label for="customHeight" data-lang-key="map_height">세로:</label>
+                <input type="number" id="customHeight" class="p-2 border rounded-md w-20 text-center" value="8" min="3" max="20">
+            </div>
+            <div class="flex items-center gap-2">
+                <label for="customWidth" data-lang-key="map_width">가로:</label>
+                <input type="number" id="customWidth" class="p-2 border rounded-md w-20 text-center" value="8" min="3" max="20">
+            </div>
+            <button id="createGridBtn" class="btn-apply font-bold py-2 px-4 rounded-lg" data-lang-key="create_grid_btn">그리드 생성</button>
+        </div>
+        <div class="board-container">
+            <div id="mapEditorGrid" class="map-editor-grid"></div>
+        </div>
+        <div class="text-center text-sm" data-lang-key="editor_instruction">칸을 클릭하여 벽을 만들거나 없앨 수 있습니다.</div>
+        <div class="flex justify-center gap-4">
+            <button id="applyCustomMapBtn" class="btn-apply font-bold py-2 px-6 rounded-lg" data-lang-key="apply_map_btn">맵 적용하기</button>
+            <button id="cancelEditorBtn" class="btn-undo font-bold py-2 px-6 rounded-lg" data-lang-key="cancel_btn">취소</button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const translations = {
+        ko: {
+            title: "나이트 투어", move_count: "현재 이동 횟수:", board_select: "보드 선택:", board_classic: "8x8 (클래식)", board_center_block: "중앙 4개 막힌 보드 (8x8)", board_vertical_block: "세로줄 막힌 보드 (9x9)", board_apple_quest: "사과 따기 (9x9)", custom_map: "커스텀 맵 만들기", language_select: "언어:", theme_select: "테마:", theme_light: "라이트", theme_dark: "다크", theme_classic: "클래식", apply_btn: "적용", undo_btn: "되돌리기", reset_btn: "재시작", msg_start: "시작하려면 원하는 칸을 클릭하세요.", msg_blocked: "이 칸은 막혀있어 이동할 수 없습니다.", msg_visited: "이미 방문한 칸입니다. 다른 칸을 선택하세요.", msg_invalid_move: "유효하지 않은 이동입니다. 다른 칸을 선택하세요.", msg_next_move: "다음 이동할 곳을 클릭하세요.", msg_undo: "마지막 이동을 되돌렸습니다. 계속하세요.", msg_win: "축하합니다! 투어를 완료했습니다!", msg_lose: (m) => `게임 오버! ${m}번 이동했습니다.`, msg_apple_start: (t) => `사과를 12개 먹으세요. 남은 턴: ${t}`, msg_apple_status: (e, t, l) => `사과: ${e}/${t}개. 남은 턴: ${l}`, msg_apple_win: (m) => `성공! 턴을 ${m}번 사용해 사과를 모두 먹었습니다!`, msg_apple_lose: (t) => `실패! ${t}턴 안에 12개의 사과를 모두 먹지 못했습니다.`, map_editor_title: "맵 에디터", map_height: "세로:", map_width: "가로:", create_grid_btn: "그리드 생성", editor_instruction: "칸을 클릭하여 벽을 만들거나 없앨 수 있습니다.", apply_map_btn: "맵 적용하기", cancel_btn: "취소"
+        },
+        en: {
+            title: "Knight's Tour", move_count: "Current Moves:", board_select: "Select Board:", board_classic: "8x8 (Classic)", board_center_block: "Center 4-Block (8x8)", board_vertical_block: "Vertical Line Block (9x9)", board_apple_quest: "Apple Quest (9x9)", custom_map: "Create Custom Map", language_select: "Language:", theme_select: "Theme:", theme_light: "Light", theme_dark: "Dark", theme_classic: "Classic", apply_btn: "Apply", undo_btn: "Undo", reset_btn: "Restart", msg_start: "Click a square to begin.", msg_blocked: "This square is blocked.", msg_visited: "This square has been visited. Choose another.", msg_invalid_move: "Invalid move. Choose another.", msg_next_move: "Click the next square to move.", msg_undo: "Last move undone. Please continue.", msg_win: "Congratulations! You completed the tour!", msg_lose: (m) => `Game Over! You made ${m} moves.`, msg_apple_start: (t) => `Eat 12 apples. Turns left: ${t}`, msg_apple_status: (e, t, l) => `Apples: ${e}/${t}. Turns left: ${l}`, msg_apple_win: (m) => `Success! You ate all apples in ${m} turns!`, msg_apple_lose: (t) => `Failure! You didn't eat 12 apples in ${t} turns.`, map_editor_title: "Map Editor", map_height: "Height:", map_width: "Width:", create_grid_btn: "Create Grid", editor_instruction: "Click cells to toggle walls.", apply_map_btn: "Apply Map", cancel_btn: "Cancel"
+        },
+        ja: {
+            title: "ナイトツアー", move_count: "現在の手数：", board_select: "ボード選択：", board_classic: "8x8 (クラシック)", board_center_block: "中央4マスブロック (8x8)", board_vertical_block: "中央縦線ブロック (9x9)", board_apple_quest: "リンゴ集め (9x9)", custom_map: "カスタムマップ作成", language_select: "言語：", theme_select: "テーマ：", theme_light: "ライト", theme_dark: "ダーク", theme_classic: "クラシック", apply_btn: "適用", undo_btn: "元に戻す", reset_btn: "リスタート", msg_start: "マスをクリックして開始します。", msg_blocked: "このマスはブロックされています。", msg_visited: "このマスは既に訪れました。他のマスを選択してください。", msg_invalid_move: "無効な動きです。他のマスを選択してください。", msg_next_move: "次のマスをクリックしてください。", msg_undo: "最後の手を元に戻しました。続けてください。", msg_win: "おめでとうございます！ツアーを完了しました！", msg_lose: (m) => `ゲームオーバー！${m}手動きました。`, msg_apple_start: (t) => `リンゴを12個集めてください。残りターン：${t}`, msg_apple_status: (e, t, l) => `リンゴ：${e}/${t}個。残りターン：${l}`, msg_apple_win: (m) => `成功！${m}ターンで全てのリンゴを集めました！`, msg_apple_lose: (t) => `失敗！${t}ターン内に12個のリンゴを集められませんでした。`, map_editor_title: "マップエディター", map_height: "縦:", map_width: "横:", create_grid_btn: "グリッド作成", editor_instruction: "マスをクリックして壁を設置/撤去します。", apply_map_btn: "マップを適用", cancel_btn: "キャンセル"
+        },
+        zh: {
+            title: "骑士巡游", move_count: "当前步数：", board_select: "选择棋盘：", board_classic: "8x8 (经典)", board_center_block: "中心4格障碍 (8x8)", board_vertical_block: "垂直线障碍 (9x9)", board_apple_quest: "苹果任务 (9x9)", custom_map: "创建自定义地图", language_select: "语言：", theme_select: "主题：", theme_light: "明亮", theme_dark: "黑暗", theme_classic: "经典", apply_btn: "应用", undo_btn: "撤销", reset_btn: "重新开始", msg_start: "点击一个方格开始。", msg_blocked: "这个方格被阻塞了。", msg_visited: "这个方格已被访问。请选择另一个。", msg_invalid_move: "无效的移动。请选择另一个。", msg_next_move: "请点击下一个方格。", msg_undo: "已撤销上一步。请继续。", msg_win: "恭喜！您已完成巡游！", msg_lose: (m) => `游戏结束！您移动了 ${m} 步。`, msg_apple_start: (t) => `吃掉12个苹果。剩余回合：${t}`, msg_apple_status: (e, t, l) => `苹果：${e}/${t}。剩余回合：${l}`, msg_apple_win: (m) => `成功！您在 ${m} 回合内吃掉了所有苹果！`, msg_apple_lose: (t) => `失败！您未能在 ${t} 回合内吃掉所有12个苹果。`, map_editor_title: "地图编辑器", map_height: "高度:", map_width: "宽度:", create_grid_btn: "创建网格", editor_instruction: "点击单元格以切换墙壁。", apply_map_btn: "应用地图", cancel_btn: "取消"
+        }
+    };
+    
+    let boardWidth = 8, boardHeight = 8, board = [], moveCount = 0, currentPosition = null, moveHistory = [], boardType = 'standard', customLayout = [];
+    const knightMoves = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
+    
+    // Game Mode States
+    let applesToEat = 12, applesEaten = 0, totalTurns = 25;
+
+    // Layouts
+    const center4BlockLayout = Array(8).fill(null).map(() => Array(8).fill(1));
+    center4BlockLayout[3][3]=0; center4BlockLayout[3][4]=0; center4BlockLayout[4][3]=0; center4BlockLayout[4][4]=0;
+    const verticalLineBlockLayout = Array(9).fill(null).map(() => Array(9).fill(1));
+    for (let i = 0; i < 9; i++) { verticalLineBlockLayout[i][4] = 0; }
+    
+    // DOM Elements
+    const boardElement = document.getElementById('board'), boardSizeSelect = document.getElementById('boardSizeSelect'), mainApplyBtn = document.getElementById('mainApplyBtn'), moveCountElement = document.getElementById('moveCount'), messageBox = document.getElementById('messageBox'), resetButton = document.getElementById('resetBtn'), undoButton = document.getElementById('undoBtn'), languageSelect = document.getElementById('languageSelect'), themeSelect = document.getElementById('themeSelect'), gameContainer = document.getElementById('gameContainer'), mapEditorContainer = document.getElementById('mapEditorContainer'), customHeightInput = document.getElementById('customHeight'), customWidthInput = document.getElementById('customWidth'), createGridBtn = document.getElementById('createGridBtn'), mapEditorGrid = document.getElementById('mapEditorGrid'), applyCustomMapBtn = document.getElementById('applyCustomMapBtn'), cancelEditorBtn = document.getElementById('cancelEditorBtn');
+    
+    const applyLanguage = () => {
+        const lang = getCurrentLang();
+        document.querySelectorAll('[data-lang-key]').forEach(el => {
+            const key = el.dataset.langKey;
+            if (translations[lang][key] && typeof translations[lang][key] === 'string') el.textContent = translations[lang][key];
+        });
+        updateMessage();
+    };
+    const applyTheme = () => { document.body.className = themeSelect.value; };
+    
+    const getCurrentLang = () => languageSelect.value;
+
+    const getAvailableCells = () => {
+        if (boardType === 'custom') return customLayout.flat().reduce((acc, cell) => acc + cell, 0);
+        const layoutMap = { 'center-4-block': 60, 'vertical-line-block': 72 };
+        return layoutMap[boardType] || boardWidth * boardHeight;
+    };
+    
+    const updateMessage = () => {
+        const lang = getCurrentLang();
+        const t = translations[lang];
+
+        if (boardType === 'apple-quest') {
+            const movesLeft = totalTurns - moveCount;
+            if (currentPosition === null) { messageBox.textContent = t.msg_apple_start(totalTurns); return; }
+            if (applesEaten === applesToEat) { messageBox.textContent = t.msg_apple_win(moveCount); return; }
+            if (moveCount >= totalTurns) { messageBox.textContent = t.msg_apple_lose(totalTurns); return; }
+            messageBox.textContent = t.msg_apple_status(applesEaten, applesToEat, movesLeft);
+            return;
+        }
+
+        if (currentPosition === null) { messageBox.textContent = t.msg_start; return; }
+        if (moveCount === getAvailableCells()) { messageBox.textContent = t.msg_win; return; }
+        if (currentPosition && !hasPossibleMoves()) { messageBox.textContent = t.msg_lose(moveCount); return; }
+        
+        messageBox.textContent = t.msg_next_move;
+    };
+    
+    const initializeBoard = () => {
+        board = []; moveCount = 0; currentPosition = null; moveHistory = [];
+        boardElement.innerHTML = '';
+        
+        const selectedValue = boardSizeSelect.value;
+        if (selectedValue === 'custom-map') {
+            boardType = 'custom';
+            boardHeight = customLayout.length;
+            boardWidth = customLayout[0]?.length || 0;
+        } else if (selectedValue.includes('x')) {
+            boardType = 'standard';
+            const dims = selectedValue.split('x').map(Number);
+            boardWidth = dims[1]; boardHeight = dims[0];
+        } else { 
+            boardType = selectedValue;
+        }
+
+        if (boardType === 'center-4-block') { boardWidth = 8; boardHeight = 8; }
+        else if (boardType === 'vertical-line-block' || boardType === 'apple-quest') { boardWidth = 9; boardHeight = 9; }
+        
+        undoButton.classList.toggle('hidden', boardType === 'apple-quest');
+
+        if (boardType === 'apple-quest') { applesEaten = 0; moveCount = 0; }
+        
+        boardElement.style.gridTemplateColumns = `repeat(${boardWidth}, 1fr)`;
+        boardElement.style.gridTemplateRows = `repeat(${boardHeight}, 1fr)`;
+        
+        setButtonsDisabledState(false);
+        moveCountElement.textContent = '0';
+        
+        for (let i = 0; i < boardHeight; i++) {
+            board[i] = [];
+            for (let j = 0; j < boardWidth; j++) {
+                const cell = document.createElement('div');
+                cell.className = `cell ${(i + j) % 2 === 0 ? 'light' : 'dark'}`;
+                cell.dataset.row = i; cell.dataset.col = j;
+                
+                const layoutMap = { 'center-4-block': center4BlockLayout, 'vertical-line-block': verticalLineBlockLayout, 'custom': customLayout };
+                const isMazeBlock = layoutMap[boardType]?.[i]?.[j] === 0;
+                if (isMazeBlock) { cell.classList.add('maze-block'); cell.textContent = '❌'; }
+
+                board[i][j] = { visited: false, moveNumber: 0, element: cell, isMazeBlock, piece: null };
+                boardElement.appendChild(cell);
+                cell.addEventListener('click', () => handleCellClick(i, j));
+            }
+        }
+        
+        if (boardType === 'apple-quest') placeApples();
+
+        applyLanguage();
+        updateBoard();
+    };
+    
+    const placeApples = () => { 
+        let placed = 0;
+        while (placed < applesToEat) {
+            const r = Math.floor(Math.random() * boardHeight), c = Math.floor(Math.random() * boardWidth);
+            if (!board[r][c].isMazeBlock) {
+                board[r][c].isMazeBlock = true;
+                board[r][c].element.innerHTML = `<span class="apple">🍎</span>`;
+                placed++;
+            }
+        }
+    };
+
+    const checkGameEnd = () => {
+        if (boardType === 'apple-quest') return applesEaten === applesToEat || moveCount >= totalTurns;
+        return moveCount > 0 && (moveCount >= getAvailableCells() || (currentPosition && !hasPossibleMoves()));
+    };
+
+    const handleCellClick = (row, col) => {
+        const lang = getCurrentLang();
+        const cell = board[row]?.[col];
+        if (checkGameEnd() || !cell || cell.isMazeBlock) {
+            if (cell?.isMazeBlock) messageBox.textContent = translations[lang].msg_blocked;
+            return;
+        }
+
+        if (currentPosition === null) {
+            currentPosition = { row, col }; moveHistory.push(currentPosition);
+            moveCount = 1;
+            board[row][col].visited = true; board[row][col].moveNumber = 1; 
+        } else {
+            const isValidMove = isWithinBounds(row, col) && isKnightMove(currentPosition, { row, col });
+            if (isValidMove) {
+                if (boardType !== 'apple-quest' && board[row][col].visited) {
+                    messageBox.textContent = translations[lang].msg_visited; return;
+                }
+                currentPosition = { row, col }; moveCount++; moveHistory.push(currentPosition);
+                board[row][col].visited = true; board[row][col].moveNumber = moveCount;
+            } else { messageBox.textContent = translations[lang].msg_invalid_move; return; }
+        }
+        
+        if (boardType === 'apple-quest' && cell.piece?.type === 'apple') {
+             if (board[row][col].hasApple) { board[row][col].hasApple = false; applesEaten++; }
+        }
+
+        updateBoard();
+        updateMessage();
+        if (checkGameEnd()) setButtonsDisabledState(true);
+    };
+    
+    const undoLastMove = () => {
+        if (moveHistory.length <= 1) return;
+        setButtonsDisabledState(false);
+        const lastPos = moveHistory.pop();
+        board[lastPos.row][lastPos.col].visited = false;
+        board[lastPos.row][lastPos.col].moveNumber = 0;
+
+        currentPosition = moveHistory[moveHistory.length - 1];
+        moveCount--;
+        updateBoard();
+        updateMessage();
+    };
+
+    const getPossibleMoves = (row, col) => {
+        const moves = [];
+        for (const [dr, dc] of knightMoves) {
+            const newRow = row + dr, newCol = col + dc;
+            if (isWithinBounds(newRow, newCol)) {
+                 if (boardType === 'apple-quest' || !board[newRow][newCol].visited) {
+                    moves.push({ row: newRow, col: newCol });
+                }
+            }
+        }
+        return moves;
+    };
+
+    const hasPossibleMoves = () => {
+        if (!currentPosition) return false;
+        return getPossibleMoves(currentPosition.row, currentPosition.col).length > 0;
+    };
+    const isWithinBounds = (row, col) => {
+        if (row < 0 || row >= boardHeight || col < 0 || col >= boardWidth) return false;
+        return !board[row][col].isMazeBlock;
+    };
+    const isKnightMove = (from, to) => {
+        const dr = Math.abs(from.row - to.row), dc = Math.abs(from.col - to.col);
+        return (dr === 1 && dc === 2) || (dr === 2 && dc === 1);
+    };
+    
+    const updateBoard = () => {
+        document.querySelectorAll('.highlight').forEach(c => c.classList.remove('highlight'));
+        for (let i = 0; i < boardHeight; i++) {
+            for (let j = 0; j < boardWidth; j++) {
+                const cellData = board[i]?.[j], cellEl = cellData?.element;
+                if (!cellEl) continue;
+                cellEl.classList.remove('path', 'current');
+                
+                let content = '';
+                if (cellData.isMazeBlock) content = '❌';
+                
+                if (cellData.visited) {
+                    cellEl.classList.add('path');
+                    content = cellData.moveNumber;
+                }
+                
+                cellEl.innerHTML = content;
+            }
+        }
+        if (currentPosition !== null) {
+            const curCellEl = board[currentPosition.row][currentPosition.col].element;
+            curCellEl.classList.add('current');
+            curCellEl.innerHTML = `<span class="knight">♞</span>`;
+            if (!checkGameEnd()) highlightPossibleMoves();
+        }
+        
+        moveCountElement.textContent = boardType === 'apple-quest' ? applesEaten : moveCount;
+    };
+    
+    const highlightPossibleMoves = () => {
+        if (!currentPosition) return;
+        getPossibleMoves(currentPosition.row, currentPosition.col).forEach(move => {
+            board[move.row][move.col].element.classList.add('highlight');
+        });
+    };
+    
+    const setButtonsDisabledState = (disabled) => {
+        const controls = [undoButton, mainApplyBtn, boardSizeSelect, languageSelect, themeSelect];
+        controls.forEach(control => {
+            control.disabled = disabled;
+            control.classList.toggle('opacity-50', disabled);
+            control.classList.toggle('cursor-not-allowed', disabled);
+        });
+        resetButton.disabled = false;
+        resetButton.classList.remove('opacity-50', 'cursor-not-allowed');
+
+        if (!disabled && moveHistory.length <= 1) {
+            undoButton.disabled = true;
+            undoButton.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+        if (checkGameEnd()) {
+            undoButton.disabled = true;
+            undoButton.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    };
+
+    const createEditorGrid = () => {
+        const height = parseInt(customHeightInput.value);
+        const width = parseInt(customWidthInput.value);
+        mapEditorGrid.innerHTML = '';
+        customLayout = Array(height).fill(null).map(() => Array(width).fill(1));
+        mapEditorGrid.style.gridTemplateColumns = `repeat(${width}, 1fr)`;
+        mapEditorGrid.style.gridTemplateRows = `repeat(${height}, 1fr)`;
+
+        for (let i = 0; i < height; i++) {
+            for (let j = 0; j < width; j++) {
+                const cell = document.createElement('div');
+                cell.className = `editor-cell ${(i + j) % 2 === 0 ? 'light' : 'dark'}`;
+                cell.addEventListener('click', () => {
+                    customLayout[i][j] = customLayout[i][j] === 1 ? 0 : 1;
+                    cell.classList.toggle('blocked');
+                    cell.textContent = cell.classList.contains('blocked') ? '❌' : '';
+                });
+                mapEditorGrid.appendChild(cell);
+            }
+        }
+    };
+    
+    const toggleEditor = (show) => {
+        gameContainer.classList.toggle('hidden', show);
+        mapEditorContainer.classList.toggle('hidden', !show);
+        document.getElementById('moveCountContainer').classList.toggle('hidden', show);
+    };
+
+    mainApplyBtn.addEventListener('click', () => { if (boardSizeSelect.value !== 'custom-map') initializeBoard(); });
+    resetButton.addEventListener('click', initializeBoard);
+    undoButton.addEventListener('click', undoLastMove);
+    languageSelect.addEventListener('change', applyLanguage);
+    themeSelect.addEventListener('change', applyTheme);
+    boardSizeSelect.addEventListener('change', (e) => {
+        if (e.target.value === 'custom-map') {
+            toggleEditor(true);
+            createEditorGrid();
+        } else {
+            toggleEditor(false);
+        }
+    });
+    createGridBtn.addEventListener('click', createEditorGrid);
+    applyCustomMapBtn.addEventListener('click', () => { toggleEditor(false); initializeBoard(); });
+    cancelEditorBtn.addEventListener('click', () => { toggleEditor(false); boardSizeSelect.value = '8x8'; });
+    
+    applyTheme();
+    initializeBoard();
+});
+</script>
+
+</body>
+</html>
