@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knight's Tour Game</title>
+    <title>나이트 투어 시뮬레이션</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -468,21 +468,23 @@ document.addEventListener('DOMContentLoaded', () => {
         updateBoard();
         updateMessage();
         updateStatus();
-        if (checkGameEnd()) setButtonsDisabledState(true);
+        setButtonsDisabledState(checkGameEnd());
     };
     
     const undoLastMove = () => {
-        if (moveHistory.length <= 1) return;
-        setButtonsDisabledState(false);
+        if (boardType === 'apple-quest' || moveHistory.length <= 1) return;
+
         const lastPos = moveHistory.pop();
         board[lastPos.row][lastPos.col].visited = false;
         board[lastPos.row][lastPos.col].moveNumber = 0;
 
         currentPosition = moveHistory[moveHistory.length - 1];
         moveCount--;
+        
         updateBoard();
         updateMessage();
         updateStatus();
+        setButtonsDisabledState(checkGameEnd());
     };
 
     const getPossibleMoves = (row, col) => {
@@ -547,24 +549,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     
-    const setButtonsDisabledState = (disabled) => {
-        const controls = [undoButton, mainApplyBtn, boardSizeSelect, languageSelect, themeSelect];
-        controls.forEach(control => {
-            control.disabled = disabled;
-            control.classList.toggle('opacity-50', disabled);
-            control.classList.toggle('cursor-not-allowed', disabled);
+    const setButtonsDisabledState = (isGameOver) => {
+        const generalControls = [mainApplyBtn, boardSizeSelect, languageSelect, themeSelect];
+        generalControls.forEach(control => {
+            control.disabled = isGameOver;
+            control.classList.toggle('opacity-50', isGameOver);
+            control.classList.toggle('cursor-not-allowed', isGameOver);
         });
+
         resetButton.disabled = false;
         resetButton.classList.remove('opacity-50', 'cursor-not-allowed');
 
-        if (!disabled && moveHistory.length <= 1) {
-            undoButton.disabled = true;
-            undoButton.classList.add('opacity-50', 'cursor-not-allowed');
-        }
-        if (checkGameEnd()) {
-            undoButton.disabled = true;
-            undoButton.classList.add('opacity-50', 'cursor-not-allowed');
-        }
+        const shouldUndoBeDisabled = isGameOver || moveHistory.length <= 1 || boardType === 'apple-quest';
+        undoButton.disabled = shouldUndoBeDisabled;
+        undoButton.classList.toggle('opacity-50', shouldUndoBeDisabled);
+        undoButton.classList.toggle('cursor-not-allowed', shouldUndoBeDisabled);
     };
 
     const createEditorGrid = () => {
